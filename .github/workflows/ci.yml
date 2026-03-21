@@ -1,0 +1,46 @@
+# This workflow runs on every push and PR to catch issues early.
+# It does four things: lint, test imports, health check, and Docker build.
+
+name: CI
+
+# TRIGGER: when does this workflow run?
+on:
+  push:
+    branches: [main]        # Every push to main
+  pull_request:
+    branches: [main]        # Every PR targeting main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest  # GitHub provides a fresh Ubuntu VM for each run
+
+    steps:
+      # Step 1: Clone the repo into the runner
+      - uses: actions/checkout@v4
+
+      # Step 2: Install Python 3.12
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Step 3: Install uv (the Python package manager we're using)
+      - uses: astral-sh/setup-uv@v4
+
+      # Step 4: Install project dependencies via uv
+      - run: uv sync --dev
+
+      # Step 4: Lint with ruff — catches syntax errors, bad imports, style issues
+      - name: Lint
+        run: uv run ruff check src/
+
+      # Step 5: Start the server in the background, wait for it, hit /health
+      - name: Health check
+        run: |
+          uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          sleep 3
+          curl --fail http://localhost:8000/health
+          kill %1
+
+      # Step 6: Build the Docker image — catches Dockerfile issues
+      - name: Docker build
+        run: docker build -t specter-cloud .
