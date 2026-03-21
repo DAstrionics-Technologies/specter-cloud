@@ -18,10 +18,15 @@ jobs:
       # Step 1: Clone the repo into the runner
       - uses: actions/checkout@v4
 
-      # Step 2: Install uv (the Python package manager we're using)
+      # Step 2: Install Python 3.12
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Step 3: Install uv (the Python package manager we're using)
       - uses: astral-sh/setup-uv@v4
 
-      # Step 3: Install Python + project dependencies via uv
+      # Step 4: Install project dependencies via uv
       - run: uv sync --dev
 
       # Step 4: Lint with ruff — catches syntax errors, bad imports, style issues
