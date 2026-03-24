@@ -31,12 +31,12 @@ jobs:
 
       # Step 4: Lint with ruff — catches syntax errors, bad imports, style issues
       - name: Lint
-        run: uv run ruff check src/
+        run: uv run ruff check app/
 
       # Step 5: Start the server in the background, wait for it, hit /health
       - name: Health check
         run: |
-          uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
           sleep 3
           curl --fail http://localhost:8000/health
           kill %1
