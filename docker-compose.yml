@@ -5,3 +5,25 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  timescaledb:
+    image: timescale/timescaledb-ha:pg17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: specter
+      POSTGRES_PASSWORD: specter
+      POSTGRES_DB: specter
+    volumes:
+      - timescaledb_data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U specter -d specter"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  timescaledb_data:
