@@ -24,3 +24,15 @@ Chronological record of development decisions, progress, and open questions.
 - Added `app/core/database.py` — async SQLAlchemy engine with `asyncpg` driver, connection pooling (`pool_size=5`, `max_overflow=10`), `pool_pre_ping` for container restarts, and `get_db()` FastAPI dependency
 - Added `sqlalchemy[asyncio]` and `asyncpg` dependencies
 - Documented decisions in specter-docs: ADR-05 (TimescaleDB), ADR-06 (Pydantic Settings), ADR-07 (Async SQLAlchemy)
+
+## 2026-03-31 — Redis telemetry ingest + env fixes
+
+- Added async Redis client singleton (`app/core/redis.py`) with connection lifecycle in FastAPI lifespan
+- Added telemetry ingest endpoint (`POST /api/v1/ingest/telemetry`) — caches per-drone state with 10s TTL and broadcasts via Redis pub/sub
+- Added `TelemetryPayload` Pydantic schema (drone_id, lat, lon, alt, speed, battery)
+- Added Redis 7 Alpine service to Docker Compose with healthcheck
+- Added `redis[asyncio]` dependency
+- Updated CI: added Redis service container so health check passes with required `REDIS_URL`
+- Fixed env config consistency: added `REDIS_URL` default in config.py, added to `.env.example`, fixed `ENV` → `ENVIRONMENT` typo in `.env`
+- Architecture decision: WebSocket over SSE/MQTT for V1 real-time streaming — bidirectional needed for command & control, Redis pub/sub bridges naturally
+- Architecture principle: transport-agnostic interfaces — all services (cloud, dashboard, onboard, link) code against stable API contracts, transport is an implementation detail
