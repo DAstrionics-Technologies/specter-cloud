@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql://specter:specter@timescaledb:5432/specter"
     ENVIRONMENT: str = "development"
+    REDIS_URL: str
 
 
 settings = Settings()
