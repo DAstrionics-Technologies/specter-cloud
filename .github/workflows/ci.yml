@@ -14,6 +14,20 @@ jobs:
   check:
     runs-on: ubuntu-latest  # GitHub provides a fresh Ubuntu VM for each run
 
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      REDIS_URL: redis://localhost:6379
+
     steps:
       # Step 1: Clone the repo into the runner
       - uses: actions/checkout@v4
