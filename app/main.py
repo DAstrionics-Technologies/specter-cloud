@@ -9,7 +9,7 @@ from app.core.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- Startup ---
-    redis = await get_redis()
+    await get_redis()
     print(f"Redis Connected: {settings.REDIS_URL}")    
 
     yield
