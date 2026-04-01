@@ -36,3 +36,11 @@ Chronological record of development decisions, progress, and open questions.
 - Fixed env config consistency: added `REDIS_URL` default in config.py, added to `.env.example`, fixed `ENV` → `ENVIRONMENT` typo in `.env`
 - Architecture decision: WebSocket over SSE/MQTT for V1 real-time streaming — bidirectional needed for command & control, Redis pub/sub bridges naturally
 - Architecture principle: transport-agnostic interfaces — all services (cloud, dashboard, onboard, link) code against stable API contracts, transport is an implementation detail
+
+## 2026-04-01 — SSE telemetry streaming + API router refactor
+
+- Added SSE streaming endpoint (`GET /api/v1/stream/telemetry?drone_id=X`) — subscribes to Redis pub/sub and streams telemetry to dashboard clients
+- Refactored routes into `app/api/v1/` directory using FastAPI APIRouter — `ingest.py` and `stream.py` as separate modules
+- `main.py` slimmed to app setup + router includes, `/health` stays app-level
+- Architecture decision: SSE over WebSocket for dashboard streaming — unidirectional server→client, auto-reconnect, plain HTTP. WebSocket deferred until bidirectional need arises (command & control)
+- Each data flow picks its own transport independently: HTTP POST for telemetry ingest, SSE for dashboard streaming, command & control TBD
