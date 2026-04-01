@@ -5,24 +5,15 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 
 router = APIRouter()
 
+
 @router.post("/api/v1/ingest/telemetry")
-async def ingest_telemetry(
-    payload: TelemetryPayload, 
-    r = Depends(get_redis)
-):
+async def ingest_telemetry(payload: TelemetryPayload, r=Depends(get_redis)):
 
     data = payload.model_dump_json()
 
     try:
-        await r.set(
-            f"drone:{payload.drone_id}:telemetry",
-            data,
-            ex=10
-        )
-        await r.publish(
-            f"drone:{payload.drone_id}:telemetry", 
-            data
-        )
+        await r.set(f"drone:{payload.drone_id}:telemetry", data, ex=10)
+        await r.publish(f"drone:{payload.drone_id}:telemetry", data)
     except RedisConnectionError:
         pass
 
