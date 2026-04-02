@@ -44,3 +44,10 @@ Chronological record of development decisions, progress, and open questions.
 - `main.py` slimmed to app setup + router includes, `/health` stays app-level
 - Architecture decision: SSE over WebSocket for dashboard streaming — unidirectional server→client, auto-reconnect, plain HTTP. WebSocket deferred until bidirectional need arises (command & control)
 - Each data flow picks its own transport independently: HTTP POST for telemetry ingest, SSE for dashboard streaming, command & control TBD
+
+## 2026-04-02 — CORS + drone simulator script
+
+- Added CORS middleware with `ALLOWED_ORIGINS` config for dashboard (localhost:3000) — needed for browser SSE connections across origins
+- Added `scripts/simulate_drone.py` — dev utility that POSTs fake telemetry in a loop (circular flight path, oscillating altitude, draining battery) for manual testing
+- Added `httpx` as dev dependency for the simulator
+- First end-to-end real-time pipeline verified: simulator → ingest API → Redis pub/sub → SSE → dashboard
