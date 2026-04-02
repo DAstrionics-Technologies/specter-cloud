@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.redis import get_redis, close_redis
@@ -21,6 +22,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="specter-cloud", version="0.1.0", lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 @app.get("/health")
 async def health():
