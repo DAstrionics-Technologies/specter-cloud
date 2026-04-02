@@ -8,5 +8,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     REDIS_URL: str = "redis://redis:6379"
 
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+
 
 settings = Settings()
