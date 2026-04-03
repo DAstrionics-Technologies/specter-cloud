@@ -3,8 +3,9 @@ import asyncio
 import math
 import random
 
-API_URL="http://localhost:8000/api/v1/ingest/telemetry"
-DRONE_ID="drone-1"
+API_URL = "http://localhost:8000/api/v1/ingest/telemetry"
+DRONE_ID = "drone-1"
+
 
 async def simulate():
     async with httpx.AsyncClient() as client:
@@ -17,7 +18,13 @@ async def simulate():
                 "lon": 77.2090 + 0.001 * math.cos(t * 0.1),
                 "alt": 40 + 10 * math.sin(t * 0.05),
                 "speed": 8 + 4 * random.random(),
-                "heading": int((math.degrees(math.atan2(math.cos(t * 0.1), -math.sin(t * 0.1))) + 360) % 360),
+                "heading": int(
+                    (
+                        math.degrees(math.atan2(math.cos(t * 0.1), -math.sin(t * 0.1)))
+                        + 360
+                    )
+                    % 360
+                ),
                 "battery": battery,
                 "voltage": round(14.0 + (battery / 100) * 2.8, 2),
                 "armed": False,
@@ -28,11 +35,14 @@ async def simulate():
 
             try:
                 await client.post(API_URL, json=payload)
-                print(f"t={t}: alt={payload['alt']:.1f}m  spd={payload['speed']:.1f}m/s bat={payload['battery']:.1f}%")
+                print(
+                    f"t={t}: alt={payload['alt']:.1f}m  spd={payload['speed']:.1f}m/s bat={payload['battery']:.1f}%"
+                )
             except httpx.ConnectError:
                 print("Server not reachable, retrying")
-        
+
             t += 1
             await asyncio.sleep(1)
+
 
 asyncio.run(simulate())
