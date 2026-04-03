@@ -51,3 +51,15 @@ Chronological record of development decisions, progress, and open questions.
 - Added `scripts/simulate_drone.py` — dev utility that POSTs fake telemetry in a loop (circular flight path, oscillating altitude, draining battery) for manual testing
 - Added `httpx` as dev dependency for the simulator
 - First end-to-end real-time pipeline verified: simulator → ingest API → Redis pub/sub → SSE → dashboard
+
+## 2026-04-03 — Expanded telemetry schema + DB persistence setup
+
+- Expanded `TelemetryPayload` schema with fields from MAVLink: heading, battery, voltage, armed, flight_mode, gps_fix_type, satellites
+- Schema designed from MAVLink message source of truth (HEARTBEAT, GLOBAL_POSITION_INT, VFR_HUD, SYS_STATUS, GPS_RAW_INT)
+- Full-state payloads every message (not delta) — cellular is lossy, matches MAVLink convention, keeps server stateless
+- Created SQLAlchemy 2.0 model (`TelemetryRecord`) with typed `Mapped` columns, `server_default=func.now()`, `String(64/32)` constraints
+- Set up Alembic with async template — `env.py` reads DB URL from app settings (single source of truth)
+- Generated and applied first migration: `create_table` + `create_hypertable('telemetry', 'time')` for TimescaleDB time-series partitioning
+- Composite primary key `(time, drone_id)` — TimescaleDB auto-indexes on time DESC
+- Updated Dockerfile to copy `alembic/` and `alembic.ini` into image
+- Documented decisions in specter-docs: ADR-08 (SSE), ADR-09 (full-state telemetry), ADR-10 (Next.js), ADR-11 (API router structure)
