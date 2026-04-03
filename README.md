@@ -29,16 +29,28 @@ API available at `http://localhost:8000`
 |--------|------|-------------|
 | GET | `/health` | Health check |
 | POST | `/api/v1/ingest/telemetry` | Ingest drone telemetry |
+| GET | `/api/v1/stream/telemetry?drone_id=X` | SSE telemetry stream |
 
 ## Project structure
 
 ```
 app/
+├── api/v1/
+│   ├── ingest.py      # Telemetry ingest endpoint
+│   └── stream.py      # SSE streaming endpoint
 ├── core/
 │   ├── config.py      # Pydantic settings
 │   ├── database.py    # Async SQLAlchemy engine
 │   └── redis.py       # Async Redis client
+├── models/
+│   ├── base.py        # SQLAlchemy declarative base
+│   └── telemetry.py   # TelemetryRecord model
 ├── schemas/
-│   └── telemetry.py   # Pydantic models
-└── main.py            # FastAPI app + routes
+│   └── telemetry.py   # Pydantic request models
+└── main.py            # FastAPI app setup + router includes
+alembic/
+├── env.py             # Async migration runner
+└── versions/          # Migration files
+scripts/
+└── simulate_drone.py  # Dev telemetry simulator
 ```
