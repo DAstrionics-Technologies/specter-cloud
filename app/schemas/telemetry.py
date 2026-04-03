@@ -7,4 +7,10 @@ class TelemetryPayload(BaseModel):
     lon: float
     alt: float
     speed: float
+    heading: int
     battery: float
+    voltage: float
+    armed: bool
+    flight_mode: str
+    gps_fix_type: int
+    satellites: int

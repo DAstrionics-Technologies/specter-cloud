@@ -10,13 +10,20 @@ async def simulate():
     async with httpx.AsyncClient() as client:
         t = 0
         while True:
+            battery = max(20, 100 - t * 0.1)
             payload = {
                 "drone_id": DRONE_ID,
                 "lat": 28.6139 + 0.001 * math.sin(t * 0.1),
                 "lon": 77.2090 + 0.001 * math.cos(t * 0.1),
                 "alt": 40 + 10 * math.sin(t * 0.05),
                 "speed": 8 + 4 * random.random(),
-                "battery": max(20, 100 - t * 0.1),
+                "heading": int((math.degrees(math.atan2(math.cos(t * 0.1), -math.sin(t * 0.1))) + 360) % 360),
+                "battery": battery,
+                "voltage": round(14.0 + (battery / 100) * 2.8, 2),
+                "armed": False,
+                "flight_mode": "STABILIZE",
+                "gps_fix_type": 3,
+                "satellites": random.randint(6, 12),
             }
 
             try:
