@@ -10,7 +10,9 @@ router = APIRouter()
 
 
 @router.post("/api/v1/ingest/telemetry")
-async def ingest_telemetry(payload: TelemetryPayload, r=Depends(get_redis), db=Depends(get_db)):
+async def ingest_telemetry(
+    payload: TelemetryPayload, r=Depends(get_redis), db=Depends(get_db)
+):
 
     data = payload.model_dump_json()
     record = TelemetryRecord(**payload.model_dump())
@@ -20,9 +22,8 @@ async def ingest_telemetry(payload: TelemetryPayload, r=Depends(get_redis), db=D
 
     except RedisConnectionError:
         pass
-    
+
     db.add(record)
     await db.commit()
-        
 
     return {"status": "ok"}
