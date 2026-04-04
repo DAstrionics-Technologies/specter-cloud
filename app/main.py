@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.core.redis import get_redis, close_redis
 from app.api.v1.ingest import router as ingest_router
 from app.api.v1.stream import router as stream_router
+from app.api.v1.health import router as health_router
 
 
 @asynccontextmanager
@@ -29,11 +30,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
-
-
+app.include_router(health_router)
 app.include_router(ingest_router)
 app.include_router(stream_router)
