@@ -25,8 +25,22 @@ jobs:
           --health-timeout 3s
           --health-retries 5
 
+      timescaledb:
+        image: timescale/timescaledb:latest-pg16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: specter
+          POSTGRES_PASSWORD: specter
+          POSTGRES_DB: specter
+        options: >-
+          --health-cmd "pg_isready -U specter"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
     env:
       REDIS_URL: redis://localhost:6379
+      DATABASE_URL: postgresql://specter:specter@localhost:5432/specter
 
     steps:
       # Step 1: Clone the repo into the runner
@@ -46,8 +60,15 @@ jobs:
       # Step 4: Lint with ruff — catches syntax errors, bad imports, style issues
       - name: Lint
         run: uv run ruff check app/
+      
+      # Step 5: Run the Alembic migrations, then run tests
+      - name: Run migrations
+        run: uv run alembic upgrade head
 
-      # Step 5: Start the server in the background, wait for it, hit /health
+      - name: Test
+        run: uv run pytest tests/ -v
+
+      # Step 6: Start the server in the background, wait for it, hit /health
       - name: Health check
         run: |
           uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
@@ -55,6 +76,6 @@ jobs:
           curl --fail http://localhost:8000/health
           kill %1
 
-      # Step 6: Build the Docker image — catches Dockerfile issues
+      # Step 7: Build the Docker image — catches Dockerfile issues
       - name: Docker build
         run: docker build -t specter-cloud .
