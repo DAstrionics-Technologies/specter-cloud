@@ -98,3 +98,15 @@ Chronological record of development decisions, progress, and open questions.
 - Decision: RTMP→HLS over WebRTC (monitoring latency acceptable), SRT as future upgrade path
 - RPi will use GStreamer `tee` to split existing camera pipeline — one RTSP connection for both GCS and cloud
 - Documented decisions: ADR-15 (nginx-rtmp), ADR-16 (video/telemetry separation)
+
+## 2026-04-06 — Structured logging + error handling
+
+- Added `structlog` with environment-aware config: colored console in dev, JSON in production
+- Shared processors: `merge_contextvars` (request ID), `add_log_level`, `TimeStamper`, `StackInfoRenderer`
+- Added `RequestIDMiddleware` — generates UUID per request, binds to all logs via contextvars, returns in `X-Request-ID` header
+- Added global exception handler — catches unhandled exceptions, logs full traceback, returns clean 500 JSON
+- Added DB error handling in ingest — rollback on failure, log error, re-raise to global handler
+- Redis failure remains a warning (degraded but functional), DB failure is an error (data loss)
+- Logging conventions: snake_case event names, structured keyword args, no credentials in logs
+- Replaced all `print()` with structured log calls
+- Health check logging: only log failures (success checks are high-frequency noise)
