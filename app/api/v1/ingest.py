@@ -1,10 +1,13 @@
+import structlog
 from fastapi import APIRouter, Depends
 from redis.exceptions import ConnectionError as RedisConnectionError
-
+from sqlalchemy.exc import SQLAlchemyError
 from app.schemas.telemetry import TelemetryPayload
 from app.models.telemetry import TelemetryRecord
 from app.core.redis import get_redis
 from app.core.database import get_db
+
+log = structlog.get_logger()
 
 router = APIRouter()
 
@@ -21,9 +24,15 @@ async def ingest_telemetry(
         await r.publish(f"drone:{payload.drone_id}:telemetry", data)
 
     except RedisConnectionError:
-        pass
+        log.warning("redis_unavailable", drone_id=payload.drone_id)
 
-    db.add(record)
-    await db.commit()
+    try:
+        db.add(record)
+        await db.commit()
+    except SQLAlchemyError as e:
+        await db.rollback()
+        log.error("db_write_failed", drone_id=payload.drone_id, error=str(e))
+        raise
 
+    log.info("telemetry_ingested", drone_id=payload.drone_id)
     return {"status": "ok"}
