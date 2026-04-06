@@ -63,3 +63,38 @@ Chronological record of development decisions, progress, and open questions.
 - Composite primary key `(time, drone_id)` — TimescaleDB auto-indexes on time DESC
 - Updated Dockerfile to copy `alembic/` and `alembic.ini` into image
 - Documented decisions in specter-docs: ADR-08 (SSE), ADR-09 (full-state telemetry), ADR-10 (Next.js), ADR-11 (API router structure)
+
+## 2026-04-04 — DB write in ingest pipeline + health endpoints
+
+- Added DB persistence to ingest endpoint — writes `TelemetryRecord` after Redis publish
+- Ordering: Redis first (latency-sensitive), DB second (durable, can be batched later)
+- DB write in separate try/catch — Redis failure shouldn't block persistence
+- Verified rows in TimescaleDB via `psql` after POST from simulator
+- Added `/health/db` readiness endpoint — runs `SELECT 1` to verify DB connectivity
+- Moved `/health` from `main.py` to `app/api/v1/health.py` — all routes in api layer, main.py is setup only
+- Health routes stay at root path (no `/api/v1/` prefix) — infrastructure endpoints, not business API
+
+## 2026-04-05 — Professional test infrastructure
+
+- Set up pytest + pytest-asyncio + httpx for async FastAPI testing
+- Created `tests/conftest.py` with three fixtures:
+  - `client` — lightweight, for endpoints that don't need DB/Redis
+  - `db_session` — transaction-based with savepoint (`join_transaction_mode="create_savepoint"`), rolls back after each test
+  - `db_client` — overrides both `get_db` and `get_redis` dependencies
+- `FakeRedis` class as lightweight stand-in — no real Redis needed for tests
+- `NullPool` test engine — avoids stale connections across pytest-asyncio event loops (Windows ProactorEventLoop issue)
+- No-op lifespan override — prevents Redis startup during tests
+- Test files: `test_schemas.py` (3), `test_health.py` (1), `test_ingest.py` (3) — all passing
+- Updated CI pipeline: added TimescaleDB service container, Alembic migration step, pytest step, `/health/db` check
+- Documented decisions: ADR-12 (test infra), ADR-13 (CI services), ADR-14 (health endpoints)
+
+## 2026-04-06 — nginx-rtmp live video streaming
+
+- Added nginx-rtmp container to docker-compose for live video streaming
+- Architecture: RPi pushes RTMP on :1935, nginx auto-generates HLS segments, serves on :8080
+- Config: 2s fragments, 10s playlist window, CORS headers for dashboard access
+- Video and telemetry in separate containers — different resource profiles, independent failure
+- Tested end-to-end: ffmpeg test source from Linux laptop → RTMP → nginx → HLS playback in browser
+- Decision: RTMP→HLS over WebRTC (monitoring latency acceptable), SRT as future upgrade path
+- RPi will use GStreamer `tee` to split existing camera pipeline — one RTSP connection for both GCS and cloud
+- Documented decisions: ADR-15 (nginx-rtmp), ADR-16 (video/telemetry separation)
