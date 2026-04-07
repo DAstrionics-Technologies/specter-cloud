@@ -1,0 +1,12 @@
+# Log level
+logLevel: info
+
+# HLS settings (how the dashboard plays video)
+hlsVariant: mpegts
+hlsSegmentCount: 3
+hlsSegmentDuration: 2s
+hlsAllowOrigin: '*'
+
+# Paths — each drone stream gets auto-created
+paths:
+  all_others:
