@@ -107,3 +107,16 @@ async def authed_drone(db_session):
     await db_session.flush()
 
     return drone, raw_key
+
+
+@pytest.fixture
+async def unkeyed_drone(db_session):
+    org = Org(name="Test Org", slug="test-org")
+    db_session.add(org)
+    await db_session.flush()
+
+    drone = Drone(name="Test Drone", slug="test-drone", org_id=org.id)
+    db_session.add(drone)
+    await db_session.flush()
+
+    return drone
