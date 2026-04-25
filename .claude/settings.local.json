@@ -10,7 +10,11 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(git branch:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "WebSearch",
+      "Read(//c/Users/drone/OneDrive/Desktop/desg/specter-onboard/src/**)",
+      "Read(//c/Users/drone/OneDrive/Desktop/desg/specter-onboard/**)",
+      "Bash(DATABASE_URL=\"postgresql://specter:specter@localhost:5432/specter\" .venv/Scripts/alembic revision --autogenerate -m \"initial schema with auth\")"
     ]
   }
 }
