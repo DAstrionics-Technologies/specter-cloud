@@ -3,11 +3,15 @@ import hmac
 import secrets
 from datetime import timedelta
 
+import structlog
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.drone import Drone
 from app.models.drone_api_key import DroneApiKey
+
+
+log = structlog.get_logger()
 
 
 KEY_TAG = "sk_drone_"
@@ -74,21 +78,26 @@ async def verify_api_key(raw: str, session: AsyncSession) -> Drone | None:
     """
     parsed_key = parse_key(raw)
     if parsed_key is None:
+        log.warning("auth_failed", reason="bad_format")
         return None
-    
+
     prefix, _secret = parsed_key
+
+    # Broader query than the hot path needs: fetches keys regardless of
+    # revoked_at / drone.is_active, so we can branch in Python and emit
+    # a distinct log line per failure reason.
     stmt = (
         select(DroneApiKey, Drone)
         .join(Drone, Drone.id == DroneApiKey.drone_id)
-        .where(
-            DroneApiKey.prefix == prefix,
-            DroneApiKey.revoked_at.is_(None),
-            Drone.is_active.is_(True),
-        )
+        .where(DroneApiKey.prefix == prefix)
     )
 
     result = await session.execute(stmt)
     rows = result.all()
+
+    if not rows:
+        log.warning("auth_failed", reason="unknown_prefix", prefix=prefix)
+        return None
 
     hashed_key = hash_key(raw)
     matched_api_key = None
@@ -100,6 +109,24 @@ async def verify_api_key(raw: str, session: AsyncSession) -> Drone | None:
             break
 
     if matched_api_key is None:
+        log.warning("auth_failed", reason="hash_mismatch", prefix=prefix)
+        return None
+
+    if matched_api_key.revoked_at is not None:
+        log.warning(
+            "auth_failed",
+            reason="revoked_key",
+            prefix=prefix,
+            drone_id=str(matched_drone.id),
+        )
+        return None
+
+    if not matched_drone.is_active:
+        log.warning(
+            "auth_failed",
+            reason="inactive_drone",
+            drone_id=str(matched_drone.id),
+        )
         return None
 
     update_stmt = (

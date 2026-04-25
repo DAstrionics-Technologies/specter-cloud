@@ -32,7 +32,7 @@ async def get_current_drone(
 
     drone = await verify_api_key(x_api_key, session)
     if drone is None:
-        log.warning("invalid_api_key")
+        # verify_api_key has already logged the specific reason
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API Key",
