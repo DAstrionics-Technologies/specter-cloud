@@ -47,7 +47,7 @@ async def test_wrong_type_rejected():
         ("lat", -91.0),
         ("lon", 181.0),
         ("lon", -181.0),
-        ("alt", -1.0),
+        ("alt", -1001.0),
         ("alt", 10_001.0),
         ("speed", -1.0),
         ("speed", 201.0),
@@ -61,8 +61,10 @@ async def test_wrong_type_rejected():
         ("gps_fix_type", 9),
         ("satellites", -1),
         ("satellites", 65),
-        ("flight_mode", "MANUAL"),
-        ("flight_mode", ""),
+        ("flight_mode", ""),                # min_length violation
+        ("flight_mode", "manual"),          # lowercase rejected by pattern
+        ("flight_mode", "ALT-HOLD"),        # hyphen rejected by pattern
+        ("flight_mode", "X" * 33),          # max_length violation
     ],
 )
 async def test_out_of_range_rejected(field, bad_value):
@@ -70,3 +72,27 @@ async def test_out_of_range_rejected(field, bad_value):
     data[field] = bad_value
     with pytest.raises(ValidationError):
         TelemetryPayload(**data)
+
+
+@pytest.mark.parametrize(
+    "mode",
+    ["UNKNOWN", "STABILIZE", "ALT_HOLD", "MANUAL", "ACRO", "POSHOLD"],
+)
+async def test_flight_mode_accepts_any_uppercase_underscore_string(mode):
+    data = _valid_data()
+    data["flight_mode"] = mode
+    payload = TelemetryPayload(**data)
+    assert payload.flight_mode == mode
+
+
+@pytest.mark.parametrize(
+    "alt",
+    [-1000.0, -50.0, -0.05, 0.0, 100.0, 10000.0],
+)
+async def test_alt_accepts_negative_relative_altitudes(alt):
+    # MAVLink relative_alt is signed. Negative values are real:
+    # rooftop-to-street descent, GPS noise around home, valley flight.
+    data = _valid_data()
+    data["alt"] = alt
+    payload = TelemetryPayload(**data)
+    assert payload.alt == alt
