@@ -110,3 +110,21 @@ Chronological record of development decisions, progress, and open questions.
 - Logging conventions: snake_case event names, structured keyword args, no credentials in logs
 - Replaced all `print()` with structured log calls
 - Health check logging: only log failures (success checks are high-frequency noise)
+
+## 2026-04-23 — Vendor-managed API key auth on telemetry ingest
+
+- New tables: `orgs`, `drones`, `drone_api_keys` (consolidated migration replaces old telemetry-only table)
+- `app/auth/api_key.py` — key generation (`sk_drone_<prefix>_<secret>`), prefix/hash split for O(log n) lookup with constant-time hash compare, debounced `last_used_at` update (60s) to avoid 600 UPDATE/min/drone at 10 Hz
+- `app/auth/dependencies.py` — `get_current_drone` FastAPI dep reads `X-API-Key` header, returns authenticated `Drone`. Handlers never trust drone_id from request body.
+- Ingest endpoint reads drone identity from the dep, removed `drone_id` from `TelemetryPayload`. Pydantic schema gained range validators (lat/lon/alt/speed/heading/battery/voltage/gps_fix_type/satellites) plus closed `Literal` flight_mode catalog.
+- Auth model is **vendor-managed**: we mint/revoke, clients contact us. No HTTP admin surface — operator CLIs only (`scripts/mint_key.py`, `scripts/revoke_key.py`). Decision recorded as project memory; defers human-auth design until customer-facing self-service is needed.
+- Rotation strategy: routine rotation via future `POST /auth/rotate` (drone uses current key to mint new), emergency re-key via Tailscale SSH (we have root on drones; clients don't have sudo). Bootstrap-credential separation deferred until fleet scale demands it.
+- Test infra: `authed_drone` and `unkeyed_drone` fixtures. Tests verify keys actually authenticate via `verify_api_key` round-trip after mint, and stop authenticating after revoke — not just DB state changes. `expire_on_commit=False` on the test session to mirror production session config (the alternative was a `MissingGreenlet` error after `verify_api_key`'s commit expires the loaded `drone` instance).
+- Granular auth-failure logging: `verify_api_key` fetches keys without filtering revoked/inactive, branches in Python, logs distinct `reason` per failure (`bad_format`, `unknown_prefix`, `hash_mismatch`, `revoked_key`, `inactive_drone`). `revoked_key` is the high-priority security signal — someone using a key we explicitly killed is now visible.
+- PR #44.
+
+## 2026-04-25 — Telemetry schema relaxation (driven by onboard integration)
+
+- Replaced closed `Literal` flight_mode with permissive pattern: `min_length=1, max_length=32, pattern=r"^[A-Z0-9_]+$"`. Decouples cloud schema from firmware mode catalogs (ArduCopter / Plane / Rover all differ); accepts `UNKNOWN` during the boot window before first HEARTBEAT. Closed enum was creating a deploy-ordering coupling: every new firmware mode would have required a cloud redeploy.
+- Relaxed `alt` lower bound from `ge=0` to `ge=-1000`. MAVLink `relative_alt` is signed (above-home displacement) — negatives are real: rooftop takeoff with ground descent, valley/mine surveys, GPS noise around home. The original `ge=0` reflected an unsigned-MSL mental model that didn't match the wire format. Lower bound is now a sanity ceiling, not a physics one.
+- Test parametrize updated on both sides: rejection cases pin the new boundaries (`alt=-1001`, `flight_mode="manual"`, `flight_mode="ALT-HOLD"`, 33-char flight_mode); new acceptance parametrize covers `UNKNOWN`/`MANUAL`/`ACRO` flight modes and negative/zero/boundary altitudes — the tests now nail down both sides of the contract.
