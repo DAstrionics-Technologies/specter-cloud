@@ -15,7 +15,6 @@ auth check has to get right gets a named test:
 """
 from datetime import datetime, timezone
 
-import pytest
 from sqlalchemy import select
 
 from app.auth.password import hash_password

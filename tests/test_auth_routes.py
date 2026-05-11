@@ -3,7 +3,6 @@
 Uses the existing db_client fixture (FakeRedis + savepoint-rolled session).
 """
 import pytest
-from sqlalchemy import select
 
 from app.auth.password import hash_password
 from app.models import Org, User

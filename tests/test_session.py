@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 
 from app.auth.password import hash_password
 from app.auth.session import (
@@ -17,7 +16,7 @@ from app.auth.session import (
     revoke_all_user_sessions,
     revoke_session,
 )
-from app.models import Org, Session, User
+from app.models import Org, User
 
 
 @pytest.fixture

@@ -17,7 +17,6 @@ making operators wait too long when they fat-finger their password.
 """
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
