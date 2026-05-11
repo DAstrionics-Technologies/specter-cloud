@@ -6,13 +6,13 @@ services:
     env_file:
       - .env
     depends_on:
-      timescaledb:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
 
-  timescaledb:
-    image: timescale/timescaledb-ha:pg17
+  postgres:
+    image: postgres:17
     ports:
       - "5432:5432"
     environment:
@@ -20,7 +20,7 @@ services:
       POSTGRES_PASSWORD: specter
       POSTGRES_DB: specter
     volumes:
-      - timescaledb_data:/home/postgres/pgdata/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U specter -d specter" ]
       interval: 5s
@@ -48,4 +48,4 @@ services:
       - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
 
 volumes:
-  timescaledb_data:
+  postgres_data:

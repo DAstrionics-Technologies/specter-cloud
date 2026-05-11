@@ -14,7 +14,24 @@
       "WebSearch",
       "Read(//c/Users/drone/OneDrive/Desktop/desg/specter-onboard/src/**)",
       "Read(//c/Users/drone/OneDrive/Desktop/desg/specter-onboard/**)",
-      "Bash(DATABASE_URL=\"postgresql://specter:specter@localhost:5432/specter\" .venv/Scripts/alembic revision --autogenerate -m \"initial schema with auth\")"
+      "Bash(DATABASE_URL=\"postgresql://specter:specter@localhost:5432/specter\" .venv/Scripts/alembic revision --autogenerate -m \"initial schema with auth\")",
+      "Bash(npx tsc *)",
+      "Bash(npx *)",
+      "Read(//c/Users/drone/OneDrive/Desktop/desg/**)",
+      "Read(//c/Users/drone/OneDrive/Desktop/desg/specter-dashboard/**)",
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:support.skydio.com)",
+      "WebFetch(domain:www.brincdrones.com)",
+      "WebFetch(domain:www.skydio.com)",
+      "WebFetch(domain:docs.skydio.com)",
+      "Bash(docker volume *)",
+      "Bash(docker stop *)",
+      "Bash(docker rm *)",
+      "Bash(uv run *)",
+      "Bash(SPECTER_ORG_ID=f6c0e4b8-f01a-49f3-94d9-88cbd97cba26 SPECTER_BOOTSTRAP_EMAIL=admin@specter.local SPECTER_BOOTSTRAP_PASSWORD='AdminLocal123!' SPECTER_BOOTSTRAP_NAME='Specter Admin' uv run python -m scripts.bootstrap_specter_org)",
+      "Bash(DATABASE_URL='postgresql://specter:specter@localhost:5432/specter' SPECTER_ORG_ID=f6c0e4b8-f01a-49f3-94d9-88cbd97cba26 SPECTER_BOOTSTRAP_EMAIL=admin@specter.local SPECTER_BOOTSTRAP_PASSWORD='AdminLocal123!' SPECTER_BOOTSTRAP_NAME='Specter Admin' uv run python -m scripts.bootstrap_specter_org)"
     ]
   }
 }

@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.middleware import RequestIDMiddleware
 from app.core.redis import get_redis, close_redis
+from app.api.v1.auth import router as auth_router
 from app.api.v1.ingest import router as ingest_router
 from app.api.v1.stream import router as stream_router
 from app.api.v1.health import router as health_router
@@ -44,9 +45,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # Middlewares
+# allow_credentials=True is required so the browser sends our session cookie
+# on cross-origin requests (dashboard at :3000, API at :8000). When credentials
+# are allowed, allow_origins MUST be a specific list, not ["*"].
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -55,5 +60,6 @@ app.add_middleware(RequestIDMiddleware)
 
 # Routes
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(ingest_router)
 app.include_router(stream_router)
